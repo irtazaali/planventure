@@ -1,12 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from flask_migrate import Migrate
+from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
 # Initialize extensions
 db = SQLAlchemy()
+migrate = Migrate()
 cors = CORS()
 
 def create_app(config=None):
@@ -16,19 +18,25 @@ def create_app(config=None):
     # Load environment variables
     load_dotenv()
     
-    # Configure SQLAlchemy
+    # Configure SQLAlchemy and other settings
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///planventure.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+    
+    # JWT Configuration
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     
     if config:
         app.config.update(config)
     
     # Initialize extensions with app
     db.init_app(app)
+    migrate.init_app(app, db)
     cors.init_app(app)
     
-    # Import models to register them with SQLAlchemy
+    # Import models AFTER db initialization
     from models import User, Trip, BaseModel
     
     # Register routes
@@ -43,6 +51,10 @@ def create_app(config=None):
             "timestamp": datetime.utcnow().isoformat(),
             "database": "connected" if db.engine.connect() else "disconnected"
         })
+    
+    # Register blueprints
+    from routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
     return app
 
