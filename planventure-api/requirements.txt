@@ -1,0 +1,23 @@
+# Core dependencies
+flask==2.3.3
+flask-sqlalchemy==3.1.1
+flask-cors==4.0.0
+python-dotenv==1.0.0
+sqlalchemy==2.0.21
+
+# Authentication & Security
+flask-jwt-extended==4.5.3
+bcrypt==4.0.1
+python-jose==3.3.0
+passlib==1.7.4
+
+# Database Migrations
+flask-migrate==4.0.5
+alembic==1.12.0
+
+# Input validation
+marshmallow==3.20.1
+email-validator==2.0.0.post2
+
+# Production server
+gunicorn==21.2.0
