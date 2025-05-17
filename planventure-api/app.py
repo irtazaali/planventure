@@ -34,7 +34,21 @@ def create_app(config=None):
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app)
+    
+    # CORS Configuration
+    cors_config = {
+        "origins": [
+            "http://localhost:3000",  # React development server
+            "http://localhost:5173",  # Vite development server
+            os.getenv('FRONTEND_URL', '')  # Production frontend URL
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+    cors.init_app(app, resources={
+        r"/api/*": cors_config  # Apply CORS to all /api routes
+    })
     
     # Import models AFTER db initialization
     from models import User, Trip, BaseModel
@@ -55,6 +69,9 @@ def create_app(config=None):
     # Register blueprints
     from routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+
+    from routes.trips import trips_bp
+    app.register_blueprint(trips_bp, url_prefix='/api/trips')
     
     return app
 

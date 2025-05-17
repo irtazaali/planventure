@@ -2,7 +2,7 @@ from app import db
 from models import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import current_app
 
 class User(BaseModel):
@@ -29,9 +29,14 @@ class User(BaseModel):
     
     def generate_token(self, token_type='access'):
         """Generate JWT token for the user."""
-        expires_delta = (current_app.config['JWT_ACCESS_TOKEN_EXPIRES'] 
+        expires_value = (current_app.config['JWT_ACCESS_TOKEN_EXPIRES'] 
                         if token_type == 'access' 
                         else current_app.config['JWT_REFRESH_TOKEN_EXPIRES'])
+        
+        if isinstance(expires_value, timedelta):
+            expires_delta = expires_value
+        else:
+            expires_delta = timedelta(seconds=float(expires_value))
         
         payload = {
             'user_id': self.id,

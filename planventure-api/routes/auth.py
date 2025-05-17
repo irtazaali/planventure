@@ -69,6 +69,35 @@ def login():
         "refresh_token": refresh_token
     }), 200
 
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh_token():
+    # Check if request has JSON
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
+    
+    # Get refresh token from request
+    data = request.get_json()
+    refresh_token = data.get('refresh_token')
+    if not refresh_token:
+        return jsonify({"error": "Refresh token is required"}), 400
+
+    try:
+        # Decode and validate refresh token
+        user = User.validate_token(refresh_token, 'refresh')
+        if not user:
+            return jsonify({"error": "Invalid refresh token"}), 401
+        
+        # Generate new access token
+        new_access_token = user.generate_token('access')
+        
+        return jsonify({
+            "message": "Token refreshed successfully",
+            "access_token": new_access_token
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": "Invalid refresh token"}), 401
+
 @auth_bp.route('/protected', methods=['GET'])
 @token_required
 def protected_route(current_user):
